@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export GOOGLE_APPLICATION_CREDENTIALS=.eigen1-vijay-gcp-creds.json
+export GOOGLE_APPLICATION_CREDENTIALS=.eigen1-vijay-gcp.credentials.json
 
 gcloud dataproc batches submit pyspark bq_to_gcs.py \
 --project=boxwood-well-386122 \
