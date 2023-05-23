@@ -7,17 +7,19 @@ connect_url = os.getenv("PGSQL_URL")
 import argparse
 parser = argparse.ArgumentParser()
 
-import datetime
+from datetime import datetime, timezone
+
 parser.add_argument("-t", "--time",
                     help="Time in UTC to be recorded in Featurestore." 
                       " For example, '2023-05-18 22:59:59 UTC'",
-                    default=datetime.now(timezone.utc),
+                    default=datetime.utcnow().replace(microsecond=0),
                     type=lambda f: datetime.strptime(f, "%Y-%m-%d %H:%M:%S %Z"),
                     required=False)
 args = parser.parse_args()
 
 # FEATURE_TIME = datetime.datetime(year=2023, month=5, day=20, hour=0, minute=0, second=0)
 FEATURE_TIME = args.time
+print(FEATURE_TIME)
 
 from sqlalchemy import create_engine
 engine = create_engine(connect_url);
@@ -46,7 +48,7 @@ profile_trust_df = pd.read_sql(sql_query, conn)
 profile_trust_df.head()
 profile_trust_df.info()
 # look for duplicate profiles
-profile_trust_df["profile_id"].value_counts()[lambda x: x>1]
+print(profile_trust_df["profile_id"].value_counts()[lambda x: x>1])
 
 PROJECT_ID = "boxwood-well-386122"
 REGION = "us-central1"
