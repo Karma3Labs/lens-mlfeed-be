@@ -15,7 +15,7 @@ spark = SparkSession.builder \
 spark.conf.set("viewsEnabled","true")
 spark.conf.set("materializationDataset","spark_materialization")
 
-def bigquery_to_parquet(bucket_name:str, table_name: str):
+def bq_diff_to_parquet(bucket_name:str, table_name: str):
   from google.cloud import storage
   gcs_client = storage.Client()
   bucket = gcs_client.get_bucket(bucket_name)
@@ -40,27 +40,28 @@ def bigquery_to_parquet(bucket_name:str, table_name: str):
       LIMIT 100
     """
 
-  bq_profiles_df = spark.read \
-                      .format('com.google.cloud.spark.bigquery') \
-                      .option("query", sql_query) \
-                      .load()
+  bq_df = spark.read \
+            .format('com.google.cloud.spark.bigquery') \
+            .option("query", sql_query) \
+            .load()
 
   # go with the default compression type
-  bq_profiles_df.write \
-                .mode('overwrite') \
-                .parquet(f"gs://{bucket_name}/{table_name}/{datetime_path}")
+  bq_df.write \
+    .mode('overwrite') \
+    .parquet(f"gs://{bucket_name}/{table_name}/{datetime_path}")
 
   from pyspark.sql.functions import max
-  next_checkpoint = bq_profiles_df \
-                      .select(max(bq_profiles_df.block_timestamp).alias("block_timestamp_max")) \
+  next_checkpoint = bq_df \
+                      .select(max(bq_df.block_timestamp).alias("block_timestamp_max")) \
                       .collect()[0]
   next_checkpoint = next_checkpoint.block_timestamp_max
   print(f"next_checkpoint:{next_checkpoint} UTC")
   blob.upload_from_string(f"{next_checkpoint} UTC")
 
-bigquery_to_parquet(args.bucket, 'public_profile')
-bigquery_to_parquet(args.bucket, 'public_profile_post')
+if __name__ == '__main__':
 
+  bq_diff_to_parquet(args.bucket, 'public_profile')
+  bq_diff_to_parquet(args.bucket, 'public_profile_post')
 
 
 
