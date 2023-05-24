@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # TODO take credentials filepath as cli argument
+PREV_GCP_ACCOUNT=$(gcloud config list account --format "value(core.account)")
 gcloud auth activate-service-account \
 --key-file=.eigen1-vijay-gcp.credentials.json
 
@@ -50,3 +51,5 @@ gcloud dataproc batches submit pyspark predict_posts.py \
 "--mlbucket" "vijay-lens-ml" \
 "-f" "lens_featurestore_t1" \
 "--modelversion" "20230522053757"
+
+gcloud config set account $PREV_GCP_ACCOUNT
