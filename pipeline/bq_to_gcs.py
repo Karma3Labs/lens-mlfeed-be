@@ -37,7 +37,6 @@ def bq_diff_to_parquet(bucket_name:str, table_name: str):
       SELECT * 
       FROM `lens-public-data.polygon.{table_name}`
       WHERE block_timestamp > '{prev_checkpoint}'
-      LIMIT 100
     """
   print(f"sql_query:{sql_query}")
 
