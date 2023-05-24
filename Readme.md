@@ -58,10 +58,18 @@ bq --location=US mk -d \
 ```
 gcloud dataproc batches submit pyspark bq_to_gcs.py --batch=bq-to-pqt-job --region=us-central1 --subnet=default-sub --version=2.1 --deps-bucket=gs://vijay-lens-dataproc-temp --jars=gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.30.0.jar -- "--bucket" "vijay-lens-bigquery-export"
 
-gcloud dataproc batches submit pyspark posts_lens_features.py --container-image="gcr.io/boxwood-well-386122/lens-recommender:latest" --batch=gcs-to-fs-job --region=us-central1 --subnet=default-sub --version=2.0 --deps-bucket=gs://vijay-lens-dataproc-temp -- "--bucket" "vijay-lens-bigquery-export" "--staging" "vijay-lens-feature-store-temp" "-f" "lens_featurestore_d2" "-t" "2023-05-19 05:59:00 UTC"
+gcloud dataproc batches submit pyspark posts_lens_features.py --container-image="gcr.io/boxwood-well-386122/lens-recommender:latest" --batch=gcs-to-fs-job --region=us-central1 --subnet=default-sub --version=2.0 --deps-bucket=gs://vijay-lens-dataproc-temp -- "--bucket" "vijay-lens-bigquery-export" "--staging" "vijay-lens-feature-store-temp" "-f" "lens_featurestore_t1"
 
-gcloud dataproc batches submit pyspark predict_posts.py --container-image="gcr.io/boxwood-well-386122/lens-recommender:latest" --batch=predict-job --region=us-central1 --subnet=default-sub --version=2.0 --deps-bucket=gs://vijay-lens-dataproc-temp -- "--staging" "vijay-lens-feature-store-temp" "--source" "vijay-lens-bigquery-export" "--mlbucket" "vijay-lens-ml" "-f" "lens_featurestore_d2" "--modelversion" "20230522053757"
+python profiles_eigentrust_features.py -f lens_featurestore_t1
+
+gcloud dataproc batches submit pyspark predict_posts.py --container-image="gcr.io/boxwood-well-386122/lens-recommender:latest" --batch=predict-job --region=us-central1 --subnet=default-sub --version=2.0 --deps-bucket=gs://vijay-lens-dataproc-temp -- "--staging" "vijay-lens-feature-store-temp" "--source" "vijay-lens-bigquery-export" "--mlbucket" "vijay-lens-ml" "-f" "lens_featurestore_t1" "--modelversion" "20230522053757"
 ```
+NOTE: if you run into 'memory pressure' errores, try increasing driver memory (must be between 1024m and 7424m per driver core):
+```
+--properties=spark.driver.cores=4,spark.driver.memory=20g 
+```
+
+
 
 Run pipeline on eigen1
 ```

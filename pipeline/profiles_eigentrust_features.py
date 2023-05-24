@@ -9,6 +9,9 @@ parser = argparse.ArgumentParser()
 
 from datetime import datetime, timezone
 
+parser.add_argument("-f", "--featurestore",
+                    help="Feature store id. For example, lens_featurestore_d2",
+                    required=True)
 parser.add_argument("-t", "--time",
                     help="Time in UTC to be recorded in Featurestore." 
                       " For example, '2023-05-18 22:59:59 UTC'",
@@ -42,6 +45,7 @@ WHERE
   strategy_name = 'followship' 
   AND date = (SELECT maxdate FROM MAX_DATE)
 """
+print(sql_query)
 
 import pandas as pd
 profile_trust_df = pd.read_sql(sql_query, conn)
@@ -61,8 +65,8 @@ aiplatform.init(project=PROJECT_ID, location=REGION, staging_bucket=BUCKET_URI)
 # These credentials will be used by any library that requests Application Default Credentials (ADC).
 # ! gcloud auth application-default login
 
-FEATURESTORE_ID = "lens_featurestore_d2"
-from google.cloud.aiplatform import Feature, Featurestore
+FEATURESTORE_ID = args.featurestore
+from google.cloud.aiplatform import Featurestore
 fs = Featurestore(
     featurestore_name=FEATURESTORE_ID
 )
