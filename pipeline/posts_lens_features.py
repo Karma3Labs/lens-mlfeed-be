@@ -23,7 +23,7 @@ parser.add_argument("-f", "--featurestore",
 parser.add_argument("-t", "--time",
                     help="Time in UTC to be recorded in Featurestore." 
                       " For example, '2023-05-18 22:59:59 UTC'",
-                    default=datetime.now(timezone.utc),
+                    default=datetime.utcnow().replace(microsecond=0),
                     type=lambda f: datetime.strptime(f, "%Y-%m-%d %H:%M:%S %Z"),
                     required=False)
 args = parser.parse_args()

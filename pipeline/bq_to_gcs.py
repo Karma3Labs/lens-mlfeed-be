@@ -39,11 +39,13 @@ def bq_diff_to_parquet(bucket_name:str, table_name: str):
       WHERE block_timestamp > '{prev_checkpoint}'
       LIMIT 100
     """
+  print(f"sql_query:{sql_query}")
 
   bq_df = spark.read \
             .format('com.google.cloud.spark.bigquery') \
             .option("query", sql_query) \
             .load()
+  print(bq_df.head())
 
   # go with the default compression type
   bq_df.write \

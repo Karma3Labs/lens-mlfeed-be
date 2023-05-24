@@ -1,9 +1,11 @@
 #!/bin/bash
 
 # TODO take credentials filepath as cli argument
-GOOGLE_APPLICATION_CREDENTIALS=.eigen1-vijay-gcp.credentials.json
+gcloud auth activate-service-account \
+--key-file=.eigen1-vijay-gcp.credentials.json
 
 gcloud dataproc batches submit pyspark bq_to_gcs.py \
+--account=eigen1-vijay-gcp@boxwood-well-386122.iam.gserviceaccount.com \
 --project=boxwood-well-386122 \
 --region=us-central1 \
 --subnet=default-sub \
@@ -14,6 +16,7 @@ gcloud dataproc batches submit pyspark bq_to_gcs.py \
 -- "--bucket" "vijay-lens-bigquery-export"
 
 gcloud dataproc batches submit pyspark posts_lens_features.py \
+--account=eigen1-vijay-gcp@boxwood-well-386122.iam.gserviceaccount.com \
 --project=boxwood-well-386122 \
 --region=us-central1 \
 --container-image="gcr.io/boxwood-well-386122/lens-recommender:latest" \
@@ -25,12 +28,14 @@ gcloud dataproc batches submit pyspark posts_lens_features.py \
 "--staging" "vijay-lens-feature-store-temp" \
 "-f" "lens_featurestore_d2"
 
-source ~/venvs/lens-ml-env3/bin/activate
+source /home/ubuntu/venvs/lens-ml-env3/bin/activate
 python -m pip install --no-cache-dir --upgrade -r requirements.txt
+export GOOGLE_APPLICATION_CREDENTIALS=.eigen1-vijay-gcp.credentials.json
 python profiles_eigentrust_features.py
 deactivate
 
 gcloud dataproc batches submit pyspark predict_posts.py \
+--account=eigen1-vijay-gcp@boxwood-well-386122.iam.gserviceaccount.com \
 --project=boxwood-well-386122 \
 --region=us-central1 \
 --region=us-central1 \
