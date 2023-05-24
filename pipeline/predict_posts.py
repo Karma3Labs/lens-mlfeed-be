@@ -40,6 +40,9 @@ args = parser.parse_args()
 spark = SparkSession.builder \
             .appName("LensFeatures") \
             .getOrCreate()
+# Enable pyarrow to reduce memory pressure on driver when converting pyspark to pandas
+spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+spark.conf.set("spark.sql.execution.arrow.enabled", "true")
 
 aiplatform.init(staging_bucket=f"gs://{args.staging}")
 fs = Featurestore(featurestore_name=args.featurestore)
@@ -110,7 +113,8 @@ def load_from_featurestore(posts_df:pd.DataFrame) -> pd.DataFrame :
                       col("post_id").alias("posts"),
                       col("profile_id").alias("profiles"))
   INSTANCES_DF = posts_df.toPandas()
-  ts = datetime.utcnow().isoformat(sep='T', timespec='milliseconds')+'Z'
+  # Vertex Featuretore timestamp should be millisecond precision.
+  ts = datetime.utcnow().replace(microsecond=0).isoformat(sep='T', timespec='milliseconds')+'Z'
   INSTANCES_DF['timestamp'] = pd.Timestamp(ts)
   print(f"{'*' * 5}INSTANCES_DF{'*' * 5}")
   print(INSTANCES_DF.head())
