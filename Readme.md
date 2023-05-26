@@ -21,7 +21,7 @@ bigquery.googleapis.com
 dataproc.googleapis.com
 ```
 
-Running pyspark on Dataproc Serverless
+Pre-reqs for Dataproc Serverless
 ```
 export GCP_PROJECT=boxwood-well-386122
 
@@ -59,6 +59,16 @@ gcloud compute firewall-rules create outbound-pgsql \
 
 # Dataproc serverless cannot access internet because it has only internal IPs
 # so create a Cloud NAT
+gcloud compute routers create default-router \
+--network=default \
+--region=us-central1
+
+gcloud compute routers nats create dataproc-serverless-nat \
+--router=default-router \
+--region=us-central1 \
+--auto-allocate-nat-external-ips \
+--nat-all-subnet-ip-ranges
+
 
 gcloud projects add-iam-policy-binding $GCP_PROJECT --member=serviceAccount:1181216607-compute@developer.gserviceaccount.com --role=roles/dataproc.worker
 
@@ -74,6 +84,7 @@ bq --location=US mk -d \
   spark_materialization
 ```
 
+Running Dataproc Serverless jobs
 ```
 gcloud dataproc batches submit pyspark bq_to_gcs.py --batch=bq-to-pqt-job --region=us-central1 --subnet=default-sub --version=2.1 --deps-bucket=gs://vijay-lens-dataproc-temp --jars=gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.30.0.jar -- "--bucket" "vijay-lens-bigquery-export"
 
@@ -89,7 +100,11 @@ NOTE: if you run into 'memory pressure' errores, try increasing driver memory (m
 ```
 --properties=spark.driver.cores=4,spark.driver.memory=20g 
 ```
+If you run into *Insufficient 'CPUS' quota* **ERROR**:
+```
+ERROR: (gcloud.dataproc.batches.submit.pyspark) Batch job is FAILED. Detail: Insufficient 'CPUS' quota. Requested 12.0, available 11.0.
 
+```
 
 
 Run pipeline on eigen1
@@ -118,9 +133,32 @@ gcloud iam service-accounts add-iam-policy-binding 1181216607-compute@developer.
 gcloud projects add-iam-policy-binding $GCP_PROJECT --member=serviceAccount:eigen1-vijay-gcp@boxwood-well-386122.iam.gserviceaccount.com --role=roles/iam.serviceAccountTokenCreator
 ```
 
+Running pipeline on free-tier GCE (**WARNING** when using the console, pay attention to the network tier that is being used for your GCE instance. Google defaults (sneaky and somewhat dishonest) to Premium Tier instead of Standard Tier, and Premium Tier networking bills can add up pretty quickly)
+```
+gcloud compute instances create lens-recommender-gce \
+    --project=boxwood-well-386122 \
+    --zone=us-central1-a \
+    --machine-type=e2-micro \
+    --network-interface=network-tier=STANDARD,stack-type=IPV4_ONLY,subnet=default-sub \
+    --metadata=enable-oslogin=true \
+    --maintenance-policy=MIGRATE \
+    --provisioning-model=STANDARD \
+    --service-account=1181216607-compute@developer.gserviceaccount.com \
+    --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append \
+    --create-disk=auto-delete=yes,boot=yes,device-name=lens-recommender-gce,image=projects/debian-cloud/global/images/debian-11-bullseye-v20230509,mode=rw,size=10,type=projects/boxwood-well-386122/zones/us-central1-a/diskTypes/pd-balanced \
+    --no-shielded-secure-boot \
+    --shielded-vtpm \
+    --shielded-integrity-monitoring \
+    --labels=goog-ec-src=vm_add-gcloud \
+    --reservation-affinity=any
+
+gcloud compute ssh --zone "us-central1-a" "lens-recommender-gce" --project "boxwood-well-386122"
 
 
+```
 
+
+Running pipleine using Dataproc Worfklow 
 ```
 gcloud dataproc workflow-templates create lens-posts-rec-wflow --region=us-central1
 

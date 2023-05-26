@@ -42,7 +42,7 @@ spark = SparkSession.builder \
             .getOrCreate()
 # Enable pyarrow to reduce memory pressure on driver when converting pyspark to pandas
 spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
-spark.conf.set("spark.sql.execution.arrow.enabled", "true")
+spark.conf.set("spark.sql.execution.arrow.enabled", "true") # deprecated in Spark 3.0
 
 aiplatform.init(staging_bucket=f"gs://{args.staging}")
 fs = Featurestore(featurestore_name=args.featurestore)
