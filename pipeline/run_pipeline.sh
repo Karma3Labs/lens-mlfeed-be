@@ -38,7 +38,8 @@ gcloud dataproc batches submit pyspark posts_lens_features.py \
 
 echo "*** GlobalTrust to Featurestore ***"
 source /home/vijay_karma3labs_com/venvs/lens-ml-venv/bin/activate
-python -m pip install --no-cache-dir --upgrade -r requirements.txt
+# Uncomment next line only for the first run
+# python -m pip install --no-cache-dir --upgrade -r requirements.txt
 export GOOGLE_APPLICATION_CREDENTIALS=.eigen1-vijay-gcp.credentials.json
 python profiles_eigentrust_features.py -f lens_featurestore_t1
 deactivate
