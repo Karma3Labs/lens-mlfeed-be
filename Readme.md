@@ -30,8 +30,15 @@ gcloud resource-manager org-policies disable-enforce compute.vmExternalIpAccess 
 
 gcloud config set dataproc/region us-central1
 
+gcloud compute networks create default
+
+gcloud compute networks subnets create default-sub \
+--subnet-mode=custom \
+--network=default
+--range=10.0.0.0/24
+
 gcloud compute networks subnets update default \
-  --region=${REGION} \
+  --region=us-cental1 \
   --enable-private-ip-google-access
 
 gcloud compute firewall-rules create allow-internal-ingress \
@@ -40,6 +47,18 @@ gcloud compute firewall-rules create allow-internal-ingress \
   --direction="ingress" \
   --action="allow" \
   --rules="all"
+
+gcloud compute firewall-rules create outbound-pgsql \
+--description="outbound traffic to PostgresSQL DB on eigne1" \
+--direction=EGRESS \
+--priority=1000 \
+--network=default \
+--action=ALLOW \
+--rules=tcp:5432 \
+--destination-ranges=65.21.77.173/32 \
+
+# Dataproc serverless cannot access internet because it has only internal IPs
+# so create a Cloud NAT
 
 gcloud projects add-iam-policy-binding $GCP_PROJECT --member=serviceAccount:1181216607-compute@developer.gserviceaccount.com --role=roles/dataproc.worker
 
@@ -63,6 +82,8 @@ gcloud dataproc batches submit pyspark posts_lens_features.py --container-image=
 python profiles_eigentrust_features.py -f lens_featurestore_t1
 
 gcloud dataproc batches submit pyspark predict_posts.py --container-image="gcr.io/boxwood-well-386122/lens-recommender:latest" --batch=predict-job --region=us-central1 --subnet=default-sub --version=2.0 --deps-bucket=gs://vijay-lens-dataproc-temp -- "--staging" "vijay-lens-feature-store-temp" "--source" "vijay-lens-bigquery-export" "--mlbucket" "vijay-lens-ml" "-f" "lens_featurestore_t1" "--modelversion" "20230522053757"
+
+gcloud dataproc batches submit pyspark generate_feed.py --container-image="gcr.io/boxwood-well-386122/lens-recommender:latest" --batch=feed-job --region=us-central1 --subnet=default-sub --version=2.0 --deps-bucket=gs://vijay-lens-dataproc-temp -- "--gcspath" "gs://vijay-lens-ml/predictions/20230522053757_xgbcl/" "--pgsql-url" $PGSQL_URL "--jdbc-url" $JDBC_URL
 ```
 NOTE: if you run into 'memory pressure' errores, try increasing driver memory (must be between 1024m and 7424m per driver core):
 ```
@@ -155,10 +176,11 @@ gsutil cp gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.13-0.30.0.j
 wget -P lib/ https://github.com/GoogleCloudDataproc/hadoop-connectors/releases/download/v2.2.13/gcs-connector-hadoop2-2.2.13-shaded.jar
 wget -P bin/ https://repo.anaconda.com/miniconda/Miniconda3-py39_23.3.1-0-Linux-x86_64.sh
 
-gsutil cp gs://vijay-lens-python-packages/Dockerfile .
-gsutil cp gs://vijay-lens-python-packages/requirements.txt .
+gsutil cp gs://vijay-lens-pyspark-deps/Dockerfile .
+gsutil cp gs://vijay-lens-pyspark-deps/requirements.txt .
 
 export IMAGE=gcr.io/boxwood-well-386122/lens-recommender
 docker build -t "${IMAGE}" .
 docker push "${IMAGE}"
 ```
+

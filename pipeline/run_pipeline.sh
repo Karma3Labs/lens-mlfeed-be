@@ -52,4 +52,19 @@ gcloud dataproc batches submit pyspark predict_posts.py \
 "-f" "lens_featurestore_t1" \
 "--modelversion" "20230522053757"
 
+echo "*** Insert recommendations into Feed ***"
+source .env
+gcloud dataproc batches submit pyspark generate_feed.py \
+--account=eigen1-vijay-gcp@boxwood-well-386122.iam.gserviceaccount.com \
+--project=boxwood-well-386122 \
+--region=us-central1 \
+--region=us-central1 \
+--container-image="gcr.io/boxwood-well-386122/lens-recommender:latest" \
+--subnet=default-sub \
+--version=2.0 \
+--deps-bucket=gs://vijay-lens-dataproc-temp \
+-- "--gcspath" "gs://vijay-lens-ml/predictions/20230522053757_xgbcl/" \
+"--pgsql-url" $PGSQL_URL \
+"--jdbc-url" $JDBC_URL
+
 gcloud config set account $PREV_GCP_ACCOUNT
