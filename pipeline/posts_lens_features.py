@@ -169,17 +169,21 @@ def save_posts_to_featurestore(posts_features_df:DataFrame):
 if __name__ == '__main__':
 
   posts_df = load_from_parquet(args.bucket, 'public_profile_post')
-  posts_df.show(5, truncate=False)
+  if posts_df.count() > 0:
+    posts_df.show(5, truncate=False)
 
-  pub_stats_df = load_from_bigquery('public_publication_stats')
-  pub_stats_df.show(5, truncate=False)
+    pub_stats_df = load_from_bigquery('public_publication_stats')
+    pub_stats_df.show(5, truncate=False)
 
-  posts_features_df = transform_posts(posts_df, pub_stats_df)
-  posts_features_df.show(5, truncate=False)
+    posts_features_df = transform_posts(posts_df, pub_stats_df)
+    posts_features_df.show(5, truncate=False)
 
-  save_posts_to_featurestore(posts_features_df)
+    save_posts_to_featurestore(posts_features_df)
 
-  save_next_checkpoint(posts_df, args.bucket, 'public_profile_post')
+    save_next_checkpoint(posts_df, args.bucket, 'public_profile_post')
+  else:
+    print(f"No new records in public_profile_post")
+
 
 
 

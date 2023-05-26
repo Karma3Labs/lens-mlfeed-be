@@ -46,6 +46,10 @@ def bq_diff_to_parquet(bucket_name:str, table_name: str):
             .load()
   print(bq_df.head())
 
+  if not bq_df.count() > 0:
+    print(f"No new records in {table_name}")
+    return
+  
   # go with the default compression type
   bq_df.write \
     .mode('overwrite') \

@@ -263,15 +263,19 @@ def save_recommendations(bucket_name:str, model_version:str, output_df: pd.DataF
 if __name__ == '__main__':
 
   posts_df = load_from_parquet(args.source, 'public_profile_post')
-  features_df = load_from_featurestore(posts_df)
+  
+  if posts_df.count() > 0:
+    features_df = load_from_featurestore(posts_df)
 
-  input_df = transform_features(features_df)
-  model_p = load_model(args.mlbucket, args.modelversion)
-  enc = load_recommend_encoder(args.mlbucket, args.modelversion)
+    input_df = transform_features(features_df)
+    model_p = load_model(args.mlbucket, args.modelversion)
+    enc = load_recommend_encoder(args.mlbucket, args.modelversion)
 
-  output_df = predict_labels(input_df, model_p, enc)
+    output_df = predict_labels(input_df, model_p, enc)
 
-  save_recommendations(args.mlbucket, args.modelversion, output_df)
+    save_recommendations(args.mlbucket, args.modelversion, output_df)
 
-  save_next_checkpoint(posts_df, args.source, 'public_profile_post')
+    save_next_checkpoint(posts_df, args.source, 'public_profile_post')
+  else:
+    print(f"No new records in public_profile_post")
 
