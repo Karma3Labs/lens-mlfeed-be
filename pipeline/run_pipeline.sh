@@ -1,5 +1,8 @@
 #!/bin/bash
 
+printf "\n\n******Starting Pipeline*"
+date
+
 # TODO take credentials filepath as cli argument
 PREV_GCP_ACCOUNT=$(gcloud config list account --format "value(core.account)")
 gcloud auth activate-service-account \
@@ -16,6 +19,10 @@ gcloud dataproc batches submit pyspark bq_to_gcs.py \
 --jars=gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.30.0.jar \
 -- "--bucket" "vijay-lens-bigquery-export"
 
+# sleep otherwise Dataproc will throw a "Insufficient CPU Quota" Error
+echo "*** Sleeping zzzzzzzzzzzzzzzzzzzz ***"
+sleep 1m
+
 echo "*** GCS to Featurestore ***"
 gcloud dataproc batches submit pyspark posts_lens_features.py \
 --account=eigen1-vijay-gcp@boxwood-well-386122.iam.gserviceaccount.com \
@@ -30,7 +37,7 @@ gcloud dataproc batches submit pyspark posts_lens_features.py \
 "-f" "lens_featurestore_t1"
 
 echo "*** GlobalTrust to Featurestore ***"
-source /home/ubuntu/venvs/lens-ml-env3/bin/activate
+source /home/vijay_karma3labs_com/venvs/lens-ml-venv/bin/activate
 python -m pip install --no-cache-dir --upgrade -r requirements.txt
 export GOOGLE_APPLICATION_CREDENTIALS=.eigen1-vijay-gcp.credentials.json
 python profiles_eigentrust_features.py -f lens_featurestore_t1
@@ -52,6 +59,10 @@ gcloud dataproc batches submit pyspark predict_posts.py \
 "-f" "lens_featurestore_t1" \
 "--modelversion" "20230522053757"
 
+# sleep otherwise Dataproc will throw a "Insufficient CPU Quota" Error
+echo "*** Sleeping zzzzzzzzzzzzzzzzzzzz ***"
+sleep 1m
+
 echo "*** Insert recommendations into Feed ***"
 source .env
 gcloud dataproc batches submit pyspark generate_feed.py \
@@ -68,3 +79,6 @@ gcloud dataproc batches submit pyspark generate_feed.py \
 "--jdbc-url" $JDBC_URL
 
 gcloud config set account $PREV_GCP_ACCOUNT
+
+printf "*Pipeline finished********\n\n"
+date
