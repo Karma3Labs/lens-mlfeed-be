@@ -74,7 +74,7 @@ def load_from_parquet(bucket_name:str, table_name: str) -> DataFrame:
   # TODO FIXME: risk of reading duplicate records when reading multiple days worth of data
   df = spark.read \
             .parquet(f"gs://{bucket_name}/{table_name}/")
-  df = df.where(f"dtime > {prev_checkpoint}")
+  df = df.where(f"dtime > {prev_checkpoint.strip()}")
   return df 
 
 def save_next_checkpoint(df:DataFrame, bucket_name:str, table_name: str):

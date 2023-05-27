@@ -36,7 +36,7 @@ def bq_diff_to_parquet(bucket_name:str, table_name: str):
   sql_query = f"""
       SELECT * 
       FROM `lens-public-data.polygon.{table_name}`
-      WHERE block_timestamp > '{prev_checkpoint}'
+      WHERE block_timestamp > '{prev_checkpoint.strip()}'
     """
   print(f"sql_query:{sql_query}")
 
