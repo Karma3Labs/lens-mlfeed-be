@@ -1,4 +1,4 @@
-import os
+import time
 import argparse
 from sqlalchemy import create_engine
 from pyspark.sql import SparkSession
@@ -46,7 +46,9 @@ print(f"yes_fraction:{yes_fraction}")
 maybe_fraction = round(num_maybe / total_maybe, 10)
 print(f"maybe_fraction:{maybe_fraction}")
 
-sample_df = df.sampleBy("recommend", fractions={'YES': yes_fraction, 'MAYBE': maybe_fraction}, seed=0)
+seed = round(time.time()*1000)
+sample_df = df.sampleBy("recommend", fractions={'YES': yes_fraction, 'MAYBE': maybe_fraction}, 
+                        seed=seed)
 
 sample_df = sample_df.select(
                         lit("ml-xgb-followship").alias("strategy_name"), # "EigenTrust + ML"
