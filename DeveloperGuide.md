@@ -3,6 +3,13 @@ The pipeine is designed to run on Google Cloud Platform. But, a lot of the code 
 
 The pipeline has a dependency on EigenTrust rankings being available in a SQL database like PostgreSQL database. For instructions on how to generate EigenTrust rankings, please refer to the repo at https://github.com/Karma3Labs/ts-lens or to the API at https://openapi.lens.k3l.io/
 
+To get a high-level overview of all the steps in the pipeline, take a look at the [run_pipelin.sh](https://github.com/Karma3Labs/lens-recommendation-be/blob/main/pipeline/run_pipeline.sh) script.
+- export data from Lens BigQuery to a datetime partitioned GCS bucket (_we avoid expensive BigQuery access costs_)
+- read recent (using partition info) data from the GCS bucket, extract features and write to Vertex AI Featurestore (_featurestore allows us to go back in time and look at feature values_)
+- read EigenTrust scores and rankings from a `globaltrust` table in a PostgreSQL database, and upload to Featurestore
+- fetch features for recent posts from Featurestore and evaluate the model to generate labels (`NO/YES/MAYBE`) and store predictions in a GCS bucket
+- load predictions from the GCS bucket and pick stratified sample of rows to insert into a `feed` table in PostgreSQL
+- [ts-lens](https://github.com/Karma3Labs/ts-lens) can then be used to serve recommendations from the `feed` table
 
 ## Setting up local environment
 

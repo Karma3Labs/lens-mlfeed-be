@@ -36,7 +36,7 @@ For details on the training process, check out the code in this [Jupyter noteboo
 Once we have trained a model, we persist it to disk (_on Google Cloud Storage_) and use it to classify any new posts that are generated. 
 A regularly scheduled job (_hourly_ for now) pulls recent posts from Lens BigQuery, extracts features and executes the model to infer a classification. Posts that are classified as 'YES' and 'MAYBE' are then stratified (_80/20 for now_) sampled to generate non-personalized recommendations for all users.
 
-To understand the details of the end-to-end pipeline used to generate recommendations, start [here](https://github.com/Karma3Labs/lens-recommendation-be/blob/main/pipeline/run_pipeline.sh).
+To get a quick overview of all the steps involved in going from raw data in BigQuery to a feed of recommendations, please take a look at [this script](https://github.com/Karma3Labs/lens-recommendation-be/blob/main/pipeline/run_pipeline.sh).
 
 # Recommendations are LIVE !
 You can preview a live feed of post recommendations at this URL - https://content.lens.k3l.io/?strategy=ml-xgb-followship
