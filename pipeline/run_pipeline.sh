@@ -77,7 +77,6 @@ gcloud dataproc batches submit pyspark generate_feed.py \
 --deps-bucket=gs://vijay-lens-dataproc-temp \
 -- "--gcspath" "gs://vijay-lens-ml/predictions/20230522053757_xgbcl/" \
 "--pgsql-url" $PGSQL_URL \
-"--jdbc-url" $JDBC_URL
 
 gcloud config set account $PREV_GCP_ACCOUNT
 

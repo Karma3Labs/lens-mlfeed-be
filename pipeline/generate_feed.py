@@ -14,20 +14,17 @@ parser.add_argument("-p", "--pgsql-url",
                     help="URL to postgres db" \
                       " For example, postgresql://username:password@dbhost:dbport/dbname",
                     required=True)
-parser.add_argument("-j", "--jdbc-url",
-                    help="URL to postgres db in jdbc format" \
-                      " For example, jdbc:postgresql://dbhost:dbport/dbname?user=username&password=secret",
-                    required=True)
 args = parser.parse_args()
 
 spark = SparkSession.builder \
             .appName("LensFeatures") \
             .getOrCreate()
+spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
 
 df = spark.read.parquet(args.gcspath)
 
 df = df.where(f"recommend != 'NO'")
-df = df.select("post_id", "recommend")
+df = df.select("post_id", "recommend", "dtime")
 df.printSchema()
 
 total_yes = df.select('post_id').where(df.recommend == 'YES').count()
@@ -50,20 +47,17 @@ seed = round(time.time()*1000)
 sample_df = df.sampleBy("recommend", fractions={'YES': yes_fraction, 'MAYBE': maybe_fraction}, 
                         seed=seed)
 
-sample_df = sample_df.select(
-                        lit("ml-xgb-followship").alias("strategy_name"), # "EigenTrust + ML"
-                        "post_id", 
-                        monotonically_increasing_id().alias('v'))
+sample_pd_df =  sample_df.toPandas()
+sample_pd_df['strategy_name'] = "ml-xgb-followship"
+sample_pd_df = sample_pd_df.sort_values(['dtime'], ascending=[False], ignore_index=True)
+sample_pd_df['v'] = sample_pd_df.index
+print(sample_pd_df.head())
+sample_pd_df.drop(['recommend', 'dtime'], axis=1, inplace=True)
 
 SQLALCHEMY_SILENCE_UBER_WARNING=1
 db = create_engine(args.pgsql_url);
+print("Deleting older feed entries for strategy 'ml-xgb-followship'")
 db.execute("DELETE FROM feed WHERE strategy_name = 'ml-xgb-followship'")
-print("Deleted older feed entries for strategy 'ml-xgb-followship'")
 
 print("Inserting new feed entries for strategy 'ml-xgb-followship'")
-sample_df.limit(100).write.format("jdbc")\
-    .option("url", args.jdbc_url) \
-    .option("driver", "org.postgresql.Driver") \
-    .option("dbtable", "feed") \
-    .mode("append") \
-    .save()
+sample_pd_df.iloc[:100].to_sql('feed', con=db, if_exists='append', index=False)
