@@ -26,7 +26,8 @@ spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
 
 df = spark.read.parquet(args.gcspath)
 
-df = df.where(f"recommend != 'NO'")
+df = df.where("is_original")
+df = df.where("recommend != 'NO'")
 df = df.select("post_id", "recommend", "dtime")
 df.printSchema()
 
@@ -35,12 +36,13 @@ print(f"dtime_now:{dtime_now}")
 
 condn_1day = dtime_now - col("dtime") < 86400
 condn_7day = dtime_now - col("dtime") < 604800
-condn_30day = dtime_now - col("dtime") < 2592000
+# we haven't been processing data for 30 days
+# condn_30day = dtime_now - col("dtime") < 2592000
 
 df = df.withColumn("time_ago",
                    when(condn_1day , "1d") \
                    .when(condn_7day, "7d") \
-                   .when(condn_30day, "30d") \
+                  #  .when(condn_30day, "30d") \
                    .otherwise("99d"))
 print("converting Pyspark dataframe to Pandas")
 pd_df = df.toPandas()
@@ -52,7 +54,7 @@ samples = []
 counts = pd_df['time_ago'].value_counts()
 samples.append(pd_df.loc[pd_df['time_ago'] == '1d'].sample(n=min(counts['1d'],100), random_state=rng))
 samples.append(pd_df.loc[pd_df['time_ago'] == '7d'].sample(n=min(counts['7d'],50), random_state=rng))
-samples.append(pd_df.loc[pd_df['time_ago'] == '30d'].sample(n=min(counts['30d'],50), random_state=rng))
+# samples.append(pd_df.loc[pd_df['time_ago'] == '30d'].sample(n=min(counts['30d'],50), random_state=rng))
 samples.append(pd_df.loc[pd_df['time_ago'] == '99d'].sample(n=min(counts['99d'],50), random_state=rng))
 sample_df = pd.concat(samples)
 print('Sampled', sample_df['time_ago'].value_counts())
