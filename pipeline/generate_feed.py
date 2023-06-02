@@ -101,6 +101,7 @@ sample_df = sample_df[['post_id']]
 sample_df['strategy_name'] = "ml-xgb-followship"
 sample_df['v'] = sample_df.index
 print(sample_df.head())
+print(sample_df.tail())
 
 SQLALCHEMY_SILENCE_UBER_WARNING=1
 db = create_engine(args.pgsql_url);
