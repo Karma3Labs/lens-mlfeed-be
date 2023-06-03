@@ -96,7 +96,7 @@ print('Recommend counts', sample_df['recommend'].value_counts())
 print('Popularity counts', sample_df['popularity'].value_counts())
 print('Time ago counts', sample_df['time_ago'].value_counts())
 
-sample_df = sample_df.sort_values(['dtime', 'weights'], ascending=[False, False], ignore_index=True)
+sample_df = sample_df.sort_values(['dtime', 'weights'], ascending=[True, True], ignore_index=True)
 sample_df = sample_df[['post_id']]
 sample_df['strategy_name'] = "ml-xgb-followship"
 sample_df['v'] = sample_df.index
