@@ -89,6 +89,16 @@ sample_df['weights'] = np.where(
                                         ),
                               .2 # treat all MAYBEs equally
                               )
+
+sample_df['weights'] = np.where(
+                            sample_df['popularity'] == 'A',
+                            np.where(
+                              sample_df['recommend'] == 'YES' ,
+                                .75, # A-YES
+                                .1), # A-MAYBE
+                            .15) # B 
+
+
 print('Weights', sample_df['weights'].value_counts())
 
 sample_df = sample_df.sample(n=100, weights='weights', random_state=rng)
