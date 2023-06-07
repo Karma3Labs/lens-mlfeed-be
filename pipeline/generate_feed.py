@@ -31,7 +31,8 @@ df = df.where(
             & (df.is_content_warning != 'True')
             & (df.recommend != 'NO')
             )
-df = df.withColumn("engagement_score", expr("(1 * upvotes) + (3 * mirrors) + (5 * comments)"))
+df = df.withColumn("engagement_score", expr("(1 * upvotes) + (3 * mirrors) + (5 * comments) + (7 * collects)"))
+df = df.where(df.engagement_score > 0)
 df = df.select("post_id", "recommend", "dtime", "engagement_score")
 df.printSchema()
 
