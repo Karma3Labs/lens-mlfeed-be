@@ -21,7 +21,7 @@ gcloud dataproc batches submit pyspark bq_to_gcs.py \
 
 # sleep otherwise Dataproc will throw a "Insufficient CPU Quota" Error
 echo "*** Sleeping zzzzzzzzzzzzzzzzzzzz ***"
-sleep 2m
+sleep 5m
 
 echo "*** GCS to Featurestore ***"
 gcloud dataproc batches submit pyspark posts_lens_features.py \
@@ -62,7 +62,7 @@ gcloud dataproc batches submit pyspark predict_posts.py \
 
 # sleep otherwise Dataproc will throw a "Insufficient CPU Quota" Error
 echo "*** Sleeping zzzzzzzzzzzzzzzzzzzz ***"
-sleep 2m
+sleep 5m
 
 echo "*** Insert recommendations into Feed ***"
 source .env
