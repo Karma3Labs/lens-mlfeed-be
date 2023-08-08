@@ -57,13 +57,13 @@ rng = np.random.default_rng()
 samples = []
 counts = pd_df['time_ago'].value_counts()
 # sample 100 or less from 1 day ago
-samples.append(pd_df.loc[pd_df['time_ago'] == '1d'].sample(n=min(counts.get('1d', 0),100), random_state=rng))
+samples.append(pd_df.loc[pd_df['time_ago'] == '1d'].sample(n=min(counts.get('1d', 0),5000), random_state=rng))
 # sample 50 or less from 7 days ago
-samples.append(pd_df.loc[pd_df['time_ago'] == '1w'].sample(n=min(counts.get('1w', 0),50), random_state=rng))
+samples.append(pd_df.loc[pd_df['time_ago'] == '1w'].sample(n=min(counts.get('1w', 0),1000), random_state=rng))
 # sample 50 or less from 30 days ago
-samples.append(pd_df.loc[pd_df['time_ago'] == '4w'].sample(n=min(counts.get('4w', 0),50), random_state=rng))
+samples.append(pd_df.loc[pd_df['time_ago'] == '4w'].sample(n=min(counts.get('4w', 0),1000), random_state=rng))
 # sample 50 or less older than 30 days
-samples.append(pd_df.loc[pd_df['time_ago'] == '99w'].sample(n=min(counts.get('99w', 0),50), random_state=rng))
+samples.append(pd_df.loc[pd_df['time_ago'] == '99w'].sample(n=min(counts.get('99w', 0),1000), random_state=rng))
 
 sample_df = pd.concat(samples)
 print('Sampled', sample_df['time_ago'].value_counts())
@@ -102,7 +102,7 @@ sample_df['weights'] = np.where(
 
 print('Weights', sample_df['weights'].value_counts())
 
-sample_df = sample_df.sample(n=100, weights='weights', random_state=rng)
+sample_df = sample_df.sample(n=min(len(sample_df.index),2000), weights='weights', random_state=rng)
 print('Recommend counts', sample_df['recommend'].value_counts())
 print('Popularity counts', sample_df['popularity'].value_counts())
 print('Time ago counts', sample_df['time_ago'].value_counts())
