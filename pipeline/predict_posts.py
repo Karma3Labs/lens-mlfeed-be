@@ -7,7 +7,7 @@ from google.cloud import aiplatform
 from google.cloud.aiplatform import Featurestore
 
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import col, max
+from pyspark.sql.functions import col, max, split
 
 import pandas as pd
 import numpy as np
@@ -56,7 +56,7 @@ def df_info_to_string(df):
 def get_checkpoint_blob(bucket_name:str, table_name: str) -> storage.Blob:
   gcs_client = storage.Client()
   bucket = gcs_client.get_bucket(bucket_name)
-  checkpoint_filepath = f"checkpoints/xgb_{table_name}.txt"
+  checkpoint_filepath = f"xgb_bq_{table_name}.txt"
   blob = bucket.get_blob(checkpoint_filepath)
   if not blob:
     blob = storage.Blob(checkpoint_filepath, bucket)
@@ -110,10 +110,12 @@ def load_from_featurestore(posts_df:pd.DataFrame) -> pd.DataFrame :
   FEATURES_IDS = {"posts": ["*"], "profiles": ["*"]}
 
   posts_df = posts_df.select(
-                      col("post_id").alias("posts"),
-                      col("profile_id").alias("profiles"))
+                      col("publication_id").alias("posts"))
+  posts_df = posts_df.withColumn("profiles", split('posts', '-')[0])
+
+                                 
   INSTANCES_DF = posts_df.toPandas()
-  # Vertex Featuretore timestamp should be millisecond precision.
+  # Vertex Featurestore timestamp should be millisecond precision.
   ts = datetime.utcnow().replace(microsecond=0).isoformat(sep='T', timespec='milliseconds')+'Z'
   INSTANCES_DF['timestamp'] = pd.Timestamp(ts)
   print(f"{'*' * 5}INSTANCES_DF{'*' * 5}")
@@ -262,7 +264,7 @@ def save_recommendations(bucket_name:str, model_version:str, output_df: pd.DataF
 
 if __name__ == '__main__':
 
-  posts_df = load_from_parquet(args.source, 'public_profile_post')
+  posts_df = load_from_parquet(args.source, 'global_stats_publication')
   
   if posts_df.count() > 0:
     features_df = load_from_featurestore(posts_df)
@@ -275,7 +277,7 @@ if __name__ == '__main__':
 
     save_recommendations(args.mlbucket, args.modelversion, output_df)
 
-    save_next_checkpoint(posts_df, args.source, 'public_profile_post')
+    save_next_checkpoint(posts_df, args.source, 'global_stats_publication')
   else:
-    print(f"No new records in public_profile_post")
+    print(f"No new records in global_stats_publication")
 

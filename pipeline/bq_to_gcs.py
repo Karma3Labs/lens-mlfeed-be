@@ -22,11 +22,12 @@ def bq_diff_to_parquet(bucket_name:str, table_name: str):
   checkpoint_filepath = f"checkpoints/bq_{table_name}.txt"
   blob = bucket.get_blob(checkpoint_filepath)
   if blob:
-    prev_checkpoint = blob.download_as_text()
+    prev_checkpoint = int(blob.download_as_text())
   else:
     # no prev checkpoint- first run of job
     # Lens launched on Polygon Mainnet in May 2022
-    prev_checkpoint = "2022-05-01 00:00:00 UTC" 
+    # "2022-05-01 00:00:00 UTC" 
+    prev_checkpoint = 1651388400000
     blob = storage.Blob(checkpoint_filepath, bucket)
 
   from datetime import datetime, timezone
@@ -35,8 +36,8 @@ def bq_diff_to_parquet(bucket_name:str, table_name: str):
 
   sql_query = f"""
       SELECT * 
-      FROM `lens-public-data.polygon.{table_name}`
-      WHERE block_timestamp > '{prev_checkpoint.strip()}'
+      FROM `lens-public-data.v2_developer_preview.{table_name}`
+      WHERE datastream_metadata.source_timestamp > '{prev_checkpoint.strip()}'
     """
   print(f"sql_query:{sql_query}")
 
@@ -57,16 +58,18 @@ def bq_diff_to_parquet(bucket_name:str, table_name: str):
 
   from pyspark.sql.functions import max
   next_checkpoint = bq_df \
-                      .select(max(bq_df.block_timestamp).alias("block_timestamp_max")) \
+                      .select(max(bq_df.block_timestamp.source_timestamp).alias("source_timestamp_max")) \
                       .collect()[0]
-  next_checkpoint = next_checkpoint.block_timestamp_max
+  next_checkpoint = next_checkpoint.source_timestamp_max
   print(f"next_checkpoint:{next_checkpoint} UTC")
   blob.upload_from_string(f"{next_checkpoint} UTC")
 
 if __name__ == '__main__':
 
-  bq_diff_to_parquet(args.bucket, 'public_profile')
-  bq_diff_to_parquet(args.bucket, 'public_profile_post')
+  bq_diff_to_parquet(args.bucket, 'publication_record')
+  bq_diff_to_parquet(args.bucket, 'publication_metadata')
+  bq_diff_to_parquet(args.bucket, 'global_stats_publication')
+  bq_diff_to_parquet(args.bucket, 'global_stats_publication_reaction')
 
 
 

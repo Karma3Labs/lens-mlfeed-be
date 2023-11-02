@@ -75,6 +75,7 @@ print(fs.gca_resource)
 profiles_entity_type = fs.get_entity_type(entity_type_id="profiles")
 profiles_entity_type.list_features()
 PROFILES_FEATURES_IDS = ['followship_rank', 'followship_score']
+# map dataframe fieldnames to featurestore fieldnames
 PROFILES_SRC_FIELDS = {
     'followship_rank': 'rank',
     'followship_score': 'score',
