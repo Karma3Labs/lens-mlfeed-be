@@ -183,7 +183,7 @@ gcloud compute instances create $INSTANCE_NAME \
 ### Create Google Cloud Storage buckets
 ```
 # bucket to export lens data from BigQuery to GCS for easier bulk processing
-gsutil mb gs://vijay-lens-bigquery-export/
+gsutil mb gs://vijay-lensv2-bigquery-export/
 
 # bucket required by Dataproc for temporary artifacts
 gsutil mb gs://vijay-lens-dataproc-temp/
@@ -192,7 +192,7 @@ gsutil mb gs://vijay-lens-dataproc-temp/
 gsutil mb gs://vijay-lens-feature-store-temp/
 
 # bucket to persist different version of the ML model and predictions from the model versions
-gsutil mb gs://vijay-lens-ml/
+gsutil mb gs://vijay-lensv2-ml/
 
 # to bucket to host pyspark dependencies
 gsutil mb gs://vijay-lens-pyspark-deps/
