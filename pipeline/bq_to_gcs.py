@@ -47,6 +47,7 @@ def bq_diff_to_parquet(bucket_name:str, table_name: str):
             .option("project", "lens-public-data") \
             .option("table", f"v2_polygon.{table_name}") \
             .load()
+  # querying directly from BQ without this temp view throws AccessDenied errors 
   temp_data.createOrReplaceTempView("temp_data")
   bq_df = spark.sql(sql_query)
 
