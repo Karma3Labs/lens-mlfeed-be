@@ -28,7 +28,7 @@ gcloud dataproc batches submit pyspark gcs_to_features_publication.py \
 --account=eigen1-vijay-gcp@boxwood-well-386122.iam.gserviceaccount.com \
 --project=boxwood-well-386122 \
 --region=us-central1 \
---container-image="gcr.io/boxwood-well-386122/lensv2-recommender:latest" \
+--container-image="gcr.io/boxwood-well-386122/lens-recommender:latest" \
 --subnet=default-sub \
 --version=2.0 \
 --deps-bucket=gs://vijay-lens-dataproc-temp \
@@ -50,7 +50,7 @@ gcloud dataproc batches submit pyspark predict_posts.py \
 --project=boxwood-well-386122 \
 --region=us-central1 \
 --region=us-central1 \
---container-image="gcr.io/boxwood-well-386122/lensv2-recommender:latest" \
+--container-image="gcr.io/boxwood-well-386122/lens-recommender:latest" \
 --subnet=default-sub \
 --version=2.0 \
 --deps-bucket=gs://vijay-lens-dataproc-temp \
@@ -71,7 +71,7 @@ gcloud dataproc batches submit pyspark generate_feed.py \
 --project=boxwood-well-386122 \
 --region=us-central1 \
 --region=us-central1 \
---container-image="gcr.io/boxwood-well-386122/lensv2-recommender:latest" \
+--container-image="gcr.io/boxwood-well-386122/lens-recommender:latest" \
 --subnet=default-sub \
 --version=2.0 \
 --deps-bucket=gs://vijay-lens-dataproc-temp \
