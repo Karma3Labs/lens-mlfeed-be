@@ -36,15 +36,20 @@ def bq_diff_to_parquet(bucket_name:str, table_name: str):
 
   sql_query = f"""
       SELECT * 
-      FROM `lens-public-data.v2_polygon.{table_name}`
+      FROM temp_data
       WHERE datastream_metadata.source_timestamp > {prev_checkpoint}
+      LIMIT 100000
     """
-  print(f"sql_query:{sql_query}")
+  print(f"querying ${table_name}:{sql_query}")
 
-  bq_df = spark.read \
+  temp_data = spark.read \
             .format('com.google.cloud.spark.bigquery') \
-            .option("query", sql_query) \
+            .option("project", "lens-public-data") \
+            .option("table", f"v2_polygon.{table_name}") \
             .load()
+  temp_data.createOrReplaceTempView("temp_data")
+  bq_df = spark.sql(sql_query)
+
   print(bq_df.head())
 
   if not bq_df.count() > 0:
@@ -58,7 +63,7 @@ def bq_diff_to_parquet(bucket_name:str, table_name: str):
 
   from pyspark.sql.functions import max
   next_checkpoint = bq_df \
-                      .select(max(bq_df.block_timestamp.source_timestamp).alias("source_timestamp_max")) \
+                      .select(max(bq_df.datastream_metadata.source_timestamp).alias("source_timestamp_max")) \
                       .collect()[0]
   next_checkpoint = next_checkpoint.source_timestamp_max
   print(f"next_checkpoint:{next_checkpoint} UTC")
