@@ -79,7 +79,7 @@ def save_next_checkpoint(df:DataFrame, bucket_name:str, table_name: str):
 def load_from_bigquery(table_name: str) -> DataFrame:
   bq_df = spark.read \
           .format('com.google.cloud.spark.bigquery') \
-          .option('table',f'lens-public-data.polygon.{table_name}') \
+          .option('table',f'lens-public-data.v2_polygon.{table_name}') \
           .load()
   return bq_df
 
