@@ -37,7 +37,7 @@ def bq_diff_to_parquet(bucket_name:str, table_name: str):
   sql_query = f"""
       SELECT * 
       FROM `lens-public-data.v2_developer_preview.{table_name}`
-      WHERE datastream_metadata.source_timestamp > '{prev_checkpoint.strip()}'
+      WHERE datastream_metadata.source_timestamp > '{prev_checkpoint}'
     """
   print(f"sql_query:{sql_query}")
 
