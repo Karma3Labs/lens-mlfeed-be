@@ -84,13 +84,14 @@ def load_from_bigquery(table_name: str) -> DataFrame:
   return bq_df
 
 def save_to_featurestore(spark_df:DataFrame):
+  spark_df.show(5, truncate=False)
   # convert from pyspark to pandas because Featurestore API works only with pandas 
   # WARNING: could result in OutOfMemory errors. 
   # Possible solutions: 
   # 1. increase spark.driver.memory 
   # 2. wrap the toPandas and ingest_from_df code in a function and call spark_df.rdd.mapPartition(map_fun)
   DF = spark_df.toPandas() 
-  FEATURE_IDS = [col for col in DF.columns.values]
+  FEATURE_IDS = [col for col in DF.columns.values if col != 'post_id']
   ENTITY_ID_FIELD = "post_id"
   # get reference to posts featurestore entity 
   posts_entity_type = fs.get_entity_type(entity_type_id="posts")
@@ -107,8 +108,8 @@ def save_record_features(rec_df:DataFrame) -> DataFrame:
     col("publication_id").alias("post_id"),
     "profile_id",
     "parent_publication_id", 
-    col("is_hidden").cast(BooleanType()), 
-    lit(False).alias("is_gated"),
+    # col("is_hidden").cast(BooleanType()), 
+    # lit(False).alias("is_gated"),
     "block_timestamp",
     col("gardener_flagged").alias("custom_filters_gardener_flagged").cast(BooleanType())
   )
@@ -120,12 +121,8 @@ def save_record_features(rec_df:DataFrame) -> DataFrame:
               .withColumn("block_timestamp", col("block_timestamp").cast(TimestampType())) \
               .withColumn("age", datediff(lit(FEATURE_TIME), col("block_timestamp")).cast(IntegerType()))
 
-  rec_df = rec_df.drop(col("parent_publication_id"))
-
-  # Pandas doesn't support timestamps with nanoseconds. 
-  # Remove nanoseconds before converting to Pandas.
-  rec_df = rec_df \
-            .withColumn("block_timestamp", date_format("block_timestamp", "yyyy-MM-dd HH:mm:ss")) \
+  # drop columns not required for Featurestore
+  rec_df = rec_df.drop("parent_publication_id", "block_timestamp")
   
   save_to_featurestore(rec_df)            
   return 
@@ -137,7 +134,7 @@ def save_metadata_features(meta_df:DataFrame) -> DataFrame:
     "region",
     "content_warning",
     "main_content_focus",
-    "tags_vector",
+    # "tags_vector",
   )
 
   meta_df = meta_df \
@@ -179,11 +176,8 @@ def save_reaction_features(reactions_df:DataFrame) -> DataFrame:
   reactions_df = reactions_df \
                     .withColumn("upvotes", col("upvotes").cast(IntegerType())) \
                     .withColumn("downvotes", col("downvotes").cast(IntegerType())) 
-  # DF['upvotes'] = DF['upvotes'].astype('Int64')
-  # DF['downvotes'] = DF['downvotes'].astype('Int64')
 
   save_to_featurestore(reactions_df)
-
   return 
 
 if __name__ == '__main__':
