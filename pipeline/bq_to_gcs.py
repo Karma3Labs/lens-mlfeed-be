@@ -67,8 +67,8 @@ def bq_diff_to_parquet(bucket_name:str, table_name: str):
                       .select(max(bq_df.datastream_metadata.source_timestamp).alias("source_timestamp_max")) \
                       .collect()[0]
   next_checkpoint = next_checkpoint.source_timestamp_max
-  print(f"next_checkpoint:{next_checkpoint} UTC")
-  blob.upload_from_string(f"{next_checkpoint} UTC")
+  print(f"next_checkpoint:{next_checkpoint}")
+  blob.upload_from_string(f"{next_checkpoint}")
 
 if __name__ == '__main__':
 

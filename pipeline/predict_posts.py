@@ -56,7 +56,7 @@ def df_info_to_string(df):
 def get_checkpoint_blob(bucket_name:str, table_name: str) -> storage.Blob:
   gcs_client = storage.Client()
   bucket = gcs_client.get_bucket(bucket_name)
-  checkpoint_filepath = f"xgb_bq_{table_name}.txt"
+  checkpoint_filepath = f"checkpoints/xgb_bq_{table_name}.txt"
   blob = bucket.get_blob(checkpoint_filepath)
   if not blob:
     blob = storage.Blob(checkpoint_filepath, bucket)
