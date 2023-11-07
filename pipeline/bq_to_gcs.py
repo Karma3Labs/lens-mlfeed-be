@@ -1,4 +1,4 @@
-import argparse 
+import argparse, datetime
 
 parser = argparse.ArgumentParser()
 
@@ -14,6 +14,46 @@ spark = SparkSession.builder \
 
 spark.conf.set("viewsEnabled","true")
 spark.conf.set("materializationDataset","spark_materialization")
+
+def sql_for_table(table_name: str, prev_checkpoint: int):
+  # ASSUMPTIONS:
+  # 1. we don't show posts older than 30 days in the final feed
+  # 2. we show only posts and not mirrors or comments
+  # 3. we don't care about fetching metrics when they are 0
+
+  ago = (datetime.datetime.now() - datetime.timedelta(30)).isoformat(sep=' ', timespec='seconds') + ' UTC'
+  if table_name == 'publication_record':
+    return f"""
+      SELECT * 
+      FROM temp_data
+      WHERE datastream_metadata.source_timestamp > {prev_checkpoint}
+      AND blocktimestamp > {ago}
+      AND publication_type = 'POST'
+    """
+  elif table_name == 'publication_metadata':
+    return f"""
+      SELECT * 
+      FROM temp_data
+      WHERE datastream_metadata.source_timestamp > {prev_checkpoint}
+      AND timestamp > {ago}
+    """
+  elif table_name == 'global_stats_publication':
+    return f"""
+      SELECT * 
+      FROM temp_data
+      WHERE datastream_metadata.source_timestamp > {prev_checkpoint}
+      AND (total_amount_of_mirrors > 0 
+        or total_amount_of_collects > 0 
+        or total_amount_of_comments > 0)
+    """
+  elif table_name == 'global_stats_publication_reaction':
+    return f"""
+      SELECT * 
+      FROM temp_data
+      WHERE datastream_metadata.source_timestamp > {prev_checkpoint}
+      AND total > 0 
+    """
+
 
 def bq_diff_to_parquet(bucket_name:str, table_name: str):
   from google.cloud import storage
@@ -34,23 +74,21 @@ def bq_diff_to_parquet(bucket_name:str, table_name: str):
   now = datetime.now(timezone.utc)
   datetime_path = f"dtime={now.strftime('%Y%m%d%H%M%S')}"
 
-  sql_query = f"""
-      SELECT * 
-      FROM temp_data
-      WHERE datastream_metadata.source_timestamp > {prev_checkpoint}
-      LIMIT 100000
-    """
-  print(f"querying ${table_name}:{sql_query}")
+  print(f"querying ${table_name}")
 
   temp_data = spark.read \
             .format('com.google.cloud.spark.bigquery') \
             .option("project", "lens-public-data") \
             .option("table", f"v2_polygon.{table_name}") \
             .load()
+  # v2_polygon dataset is single-region us-central1
   # querying directly from BQ without this temp view throws AccessDenied errors 
   temp_data.createOrReplaceTempView("temp_data")
-  bq_df = spark.sql(sql_query)
 
+  sql_query = sql_for_table(table_name, prev_checkpoint)
+
+  print(f"querying ${table_name}:{sql_query}")
+  bq_df = spark.sql(sql_query)
   print(bq_df.head())
 
   if not bq_df.count() > 0:
