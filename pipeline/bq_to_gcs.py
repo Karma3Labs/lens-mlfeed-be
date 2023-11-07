@@ -27,7 +27,7 @@ def sql_for_table(table_name: str, prev_checkpoint: int):
       SELECT * 
       FROM temp_data
       WHERE datastream_metadata.source_timestamp > {prev_checkpoint}
-      AND blocktimestamp > {ago}
+      AND blocktimestamp > '{ago}'
       AND publication_type = 'POST'
     """
   elif table_name == 'publication_metadata':
@@ -35,7 +35,7 @@ def sql_for_table(table_name: str, prev_checkpoint: int):
       SELECT * 
       FROM temp_data
       WHERE datastream_metadata.source_timestamp > {prev_checkpoint}
-      AND timestamp > {ago}
+      AND timestamp > '{ago}'
     """
   elif table_name == 'global_stats_publication':
     return f"""
