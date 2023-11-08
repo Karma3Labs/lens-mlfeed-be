@@ -253,3 +253,9 @@ bash run_pipeline.sh
 ```
 ERROR: (gcloud.dataproc.batches.submit.pyspark) Batch job is FAILED. Detail: Insufficient 'CPUS' quota. Requested 12.0, available 11.0.
 ```
+
+**GCS Storage Utilization**: Dataproc batch jobs create a lot of temp objects that keep growing over time. If you don't cleanup periodically, your GCP bill keep growing. 
+1. Run the `cleanup.sh` script in a scheduler like crontab. 
+2. In addition the cleanup script, you also need to identify the `staging` and `temp` GCS buckets that Dataproc creates. For example, gs://dataproc-staging-us-central1-0123456789-abcdefgh and gs://dataproc-temp-us-central1-0123456789-xyz12345
+    1. Set object lifecycle on staging to auto-delete after 30 days - `gsutil lifecycle set gs_staging_lifecycle.json gs://dataproc-staging-us-central1-CHANGE-ME`
+    2. Set object lifecycle on temp to auto-delete after 30 days - `gsutil lifecycle set gs_staging_lifecycle.json gs://dataproc-temp-us-central1-CHANGE-ME`
