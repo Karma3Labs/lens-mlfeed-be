@@ -110,7 +110,7 @@ Building custom image for use in Dataproc
 export IMAGE_NAME=<<choose a name>>
 gcloud config set project $GCP_PROJECT
 mkdir image
-cd iamge
+cd image
 mkdir lib
 mkdir bin
 
@@ -119,8 +119,8 @@ gsutil cp gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.13-0.30.0.j
 wget -P lib/ https://github.com/GoogleCloudDataproc/hadoop-connectors/releases/download/v2.2.13/gcs-connector-hadoop2-2.2.13-shaded.jar
 wget -P bin/ https://repo.anaconda.com/miniconda/Miniconda3-py39_23.3.1-0-Linux-x86_64.sh
 
-gsutil cp gs://vijay-lens-pyspark-deps/Dockerfile .
-gsutil cp gs://vijay-lens-pyspark-deps/requirements.txt .
+cp ~/<<gitclonethisrepo>>/pipeline/Dockerfile .
+cp ~/<<gitclonethisrepo>>/pipeline/requirements.txt .
 
 export IMAGE=gcr.io/$GCP_PROJECT/$IMAGE_NAME
 docker build -t "${IMAGE}" .
@@ -194,7 +194,7 @@ gsutil mb gs://vijay-lens-feature-store-temp/
 # bucket to persist different version of the ML model and predictions from the model versions
 gsutil mb gs://vijay-lensv2-ml/
 
-# to bucket to host pyspark dependencies
+# a bucket to host pyspark dependencies
 gsutil mb gs://vijay-lens-pyspark-deps/
 ```
 ## Generate EigenTrust Profile scores and rankings
